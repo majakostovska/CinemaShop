@@ -1,0 +1,55 @@
+﻿@model CinemaShop.Web.Models.DTO.ShoppingCartDTO
+
+<h1>Шопинг картичка</h1>
+
+<div class="container">
+
+    <div class="row m-5">
+        <a class="btn btn-success"  asp-action="OrderNow">Order Now</a>
+
+    </div>
+
+
+    <div class="row m-5">
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Филм</th>
+                    <th scope="col">Цена</th>
+                    <th scope="col">Број на карти</th>
+                    <th scope="col">Сума</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.ProductInShoppingCarts.Count; i++)
+                {
+                    var item = Model.ProductInShoppingCarts[i];
+                    <tr>
+                        <th scope="row">@(i+1)</th>
+                        <td>@item.Product.ProductName</td>
+                        <td>@item.Product.Price</td>
+                        <td>@item.Quantity</td>
+                        <td>@(item.Product.Price*item.Quantity)</td>
+                    <td><a class="btn btn-danger" asp-route-productId="@item.ProductId" asp-action="DeleteProductFromShoppingCart">Delete</a></td>
+                    </tr>
+                }
+            </tbody>
+
+            <tfoot>
+                <tr>
+                    <th scope="col">Вкупно: </th>
+                    <th scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col">@Model.TotalPrice денари </th>
+                </tr>
+            </tfoot>
+
+        </table>
+    </div>
+    
+</div>
+
