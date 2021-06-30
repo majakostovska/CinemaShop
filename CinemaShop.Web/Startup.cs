@@ -1,5 +1,10 @@
-using CinemaShop.Web.Data;
-using CinemaShop.Web.Models.Identity;
+
+using CinemaShop.Domain.Identity;
+using CinemaShop.Repository;
+using CinemaShop.Repository.Implementation;
+using CinemaShop.Repository.Interface;
+using CinemaShop.Services.Implementation;
+using CinemaShop.Services.Interface;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -33,7 +38,21 @@ namespace CinemaShop.Web
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<CinemaShopUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
-            services.AddControllersWithViews();
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped(typeof(IUserRepository), typeof(UserRepository));
+            services.AddScoped(typeof(IOrderRepository), typeof(OrderRepository));
+
+
+            services.AddTransient<IProductService, Services.Implementation.ProductService>();
+            services.AddTransient<IShoppingCartService, ShoppingCartService>();
+            services.AddTransient<IOrderService, OrderService>();
+
+
+            services.AddControllersWithViews()
+                .AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
+
             services.AddRazorPages();
         }
 

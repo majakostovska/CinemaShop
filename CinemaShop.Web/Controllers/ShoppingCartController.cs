@@ -1,7 +1,7 @@
-﻿using CinemaShop.Web.Data;
-using CinemaShop.Web.Models.Domain;
-using CinemaShop.Web.Models.DTO;
-using CinemaShop.Web.Models.Identity;
+﻿
+using CinemaShop.Domain.DomainModels;
+using CinemaShop.Domain.Identity;
+using CinemaShop.Services.Interface;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,107 +15,54 @@ namespace CinemaShop.Web.Controllers
 {
     public class ShoppingCartController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<CinemaShopUser> _userManager;
 
-        public ShoppingCartController(ApplicationDbContext context, UserManager<CinemaShopUser> userManager)
+        private readonly IShoppingCartService _shoppingCartService;
+
+        public ShoppingCartController(IShoppingCartService shoppingCartService)
         {
-            _context = context;
-            _userManager = userManager;
+            _shoppingCartService = shoppingCartService;
         }
-        public async Task<IActionResult> Index()
+
+        public IActionResult Index()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var loggedInUser = await _context.Users
-                .Where(z => z.Id == userId)
-                .Include(z => z.UserCart)
-                .Include(z=>z.UserCart.ProductInShoppingCarts)
-                .Include("UserCart.ProductInShoppingCarts.Product")
-                .FirstOrDefaultAsync();
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var userShoppingCart = loggedInUser.UserCart;
-            var productPrice = userShoppingCart.ProductInShoppingCarts.Select(z => new
-            {
-                ProductPrice = z.Product.Price,
-                Quantity = z.Quantity
-            }).ToList();
+            return View(this._shoppingCartService.getShoppingCartInfo(userId));
+        }
 
-            double totalPrice = 0;
-            foreach(var item in productPrice)
+        
+
+        public IActionResult DeleteProductFromShoppingCart(Guid id)
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var result = this._shoppingCartService.DeleteProductFromShoppingCart(userId, id);
+
+            if (result)
             {
-                totalPrice += item.ProductPrice * item.Quantity;
+                return RedirectToAction("Index", "ShoppingCart");
             }
-
-            ShoppingCartDTO shoppingCartDTOItem = new ShoppingCartDTO
+            else
             {
-                ProductInShoppingCarts = userShoppingCart.ProductInShoppingCarts.ToList(),
-                TotalPrice = totalPrice
-            };
-            //var allProducts = userShoppingCart.ProductInShoppingCarts.Select(z => z.Product).ToList();
-            return View(shoppingCartDTOItem);
-        }
-        public async Task<IActionResult> DeleteProductFromShoppingCart(Guid productId)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var loggedInUser = await _context.Users
-                .Where(z => z.Id == userId)
-                .Include(z => z.UserCart)
-                .Include(z => z.UserCart.ProductInShoppingCarts)
-                .Include("UserCart.ProductInShoppingCarts.Product")
-                .FirstOrDefaultAsync();
-
-            var userShoppingCart = loggedInUser.UserCart;
-            var productToDelete = userShoppingCart.ProductInShoppingCarts
-                .Where(z => z.ProductId == productId)
-                .FirstOrDefault();
-            userShoppingCart.ProductInShoppingCarts.Remove(productToDelete);
-            _context.Update(userShoppingCart);
-            await _context.SaveChangesAsync();
-            return RedirectToAction("Index", "ShoppingCart");
-
-        }
-        public async Task<IActionResult> OrderNow()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var loggedInUser = await _context.Users
-                .Where(z => z.Id == userId)
-                .Include(z => z.UserCart)
-                .Include(z => z.UserCart.ProductInShoppingCarts)
-                .Include("UserCart.ProductInShoppingCarts.Product")
-                .FirstOrDefaultAsync();
-
-            var userShoppingCart = loggedInUser.UserCart;
-
-            Order orderItem = new Order
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                User = loggedInUser
-            };
-
-            _context.Add(orderItem);
-            await _context.SaveChangesAsync();
-            List<ProductInOrder> productInOrders = new List<ProductInOrder>();
-            productInOrders = userShoppingCart.ProductInShoppingCarts
-                .Select(z => new ProductInOrder
-                {
-                    OrderId = orderItem.Id,
-                    ProductId=z.ProductId,
-                    SelectedProduct=z.Product,
-                    UserOrder=orderItem
-                }).ToList();
-
-            foreach(var item in productInOrders)
-            {
-                _context.Add(item);
-                await _context.SaveChangesAsync();
+                return RedirectToAction("Index", "ShoppingCart");
             }
-
-            loggedInUser.UserCart.ProductInShoppingCarts.Clear();
-            _context.Update(loggedInUser);
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction("Index", "ShoppingCart");
         }
+
+        public IActionResult Order()
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var result = this._shoppingCartService.Order(userId);
+            
+            if(result)
+            {
+                return RedirectToAction("Index", "ShoppingCart");
+            }
+            else
+            {
+                return RedirectToAction("Index", "ShoppingCart");
+            }
+        }
+
     }
 }

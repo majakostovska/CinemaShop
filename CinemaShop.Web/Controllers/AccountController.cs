@@ -1,7 +1,7 @@
 ﻿
-
-
-using CinemaShop.Web.Models.Identity;
+using CinemaShop.Domain.DomainModels;
+using CinemaShop.Domain.DTO;
+using CinemaShop.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace EShop.Web.Controllers
+namespace CinemaShop.Web.Controllers
 {
     public class AccountController : Controller
     {
@@ -46,7 +46,7 @@ namespace EShop.Web.Controllers
                         Email = request.Email,
                         EmailConfirmed = true,
                         PhoneNumberConfirmed = true,
-                        UserCart = new CinemaShop.Web.Models.Domain.ShoppingCart()
+                        UserCart = new ShoppingCart()
                     };
                     var result = await userManager.CreateAsync(user, request.Password);
                     if (result.Succeeded)

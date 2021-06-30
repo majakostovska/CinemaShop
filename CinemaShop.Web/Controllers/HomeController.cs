@@ -1,4 +1,5 @@
-﻿using CinemaShop.Web.Models;
+﻿
+using CinemaShop.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;

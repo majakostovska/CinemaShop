@@ -1,12 +1,11 @@
-﻿@model CinemaShop.Web.Models.DTO.AddToShoppingCardDTO
+﻿
+@model CinemaShop.Domain.DTO.AddToShoppingCardDTO
 
-@{ 
-    ViewData["Title"] = "Add To Shopping Card";
-    Layout = "~/Views/Shared/_Layout.cshtml";
-} 
+@{ ViewData["Title"] = "Add To Shopping Card";
+    Layout = "~/Views/Shared/_Layout.cshtml"; }
 
 <h1>Add selected product to user shopping card</h1>
-<hr/>
+<hr />
 <div class="row">
     <div class="col-md-4 m-auto">
         <form asp-action="AddProductToCard" method="post">

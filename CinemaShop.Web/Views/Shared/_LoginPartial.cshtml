@@ -1,6 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@inject SignInManager<CinemaShop.Web.Models.Identity.CinemaShopUser> SignInManager
-@inject UserManager<CinemaShop.Web.Models.Identity.CinemaShopUser> UserManager
+@inject SignInManager<CinemaShop.Domain.Identity.CinemaShopUser> SignInManager
+@inject UserManager<CinemaShop.Domain.Identity.CinemaShopUser> UserManager
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
