@@ -5,6 +5,7 @@ using CinemaShop.Services.Interface;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,20 +49,52 @@ namespace CinemaShop.Web.Controllers
             }
         }
 
-        public IActionResult Order()
+        private Boolean Order()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var result = this._shoppingCartService.Order(userId);
-            
-            if(result)
+
+            return result;
+        }
+
+        public IActionResult PayOrder(string stripeEmail, string stripeToken)
+        {
+            var customerService = new CustomerService();
+            var chargeService = new ChargeService();
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var order = this._shoppingCartService.getShoppingCartInfo(userId);
+
+            var customer = customerService.Create(new CustomerCreateOptions
             {
-                return RedirectToAction("Index", "ShoppingCart");
-            }
-            else
+                Email = stripeEmail,
+                Source = stripeToken
+            });
+
+            var charge = chargeService.Create(new ChargeCreateOptions
             {
-                return RedirectToAction("Index", "ShoppingCart");
+                Amount = (Convert.ToInt32(order.TotalPrice) * 100),
+                Description = "CinemaShop Application Payment",
+                Currency = "mkd",
+                Customer = customer.Id
+            });
+
+            if (charge.Status == "succeeded")
+            {
+                var result = this.Order();
+
+                if (result!=null)
+                {
+                    return RedirectToAction("Index", "ShoppingCart");
+                }
+                else
+                {
+                    return RedirectToAction("Index", "ShoppingCart");
+                }
             }
+
+            return RedirectToAction("Index", "ShoppingCart");
         }
 
     }

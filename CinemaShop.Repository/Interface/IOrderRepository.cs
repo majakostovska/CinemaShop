@@ -7,6 +7,7 @@ namespace CinemaShop.Repository.Interface
 {
     public interface IOrderRepository
     {
-        List<Order> GetAllOrders();
+        List<Order> getAllOrders();
+        Order GetOrderDetails(BaseEntity model);
     }
 }

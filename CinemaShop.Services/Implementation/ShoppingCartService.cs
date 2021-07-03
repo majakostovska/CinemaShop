@@ -13,14 +13,16 @@ namespace CinemaShop.Services.Implementation
     {
         private readonly IRepository<ShoppingCart> _shoppingCartRepository;
         private readonly IRepository<Order> _orderRepository;
+        private readonly IRepository<EmailMessage> _mailRepository;
         private readonly IRepository<ProductInOrder> _productInOrderRepository;
         private readonly IUserRepository _userRepository;
-        public ShoppingCartService(IRepository<ShoppingCart> shoppingCartRepository, IUserRepository userRepository, IRepository<Order> orderRepository, IRepository<ProductInOrder> productInOrderRepository)
+        public ShoppingCartService(IRepository<EmailMessage> mailRepository, IRepository<ShoppingCart> shoppingCartRepository, IUserRepository userRepository, IRepository<Order> orderRepository, IRepository<ProductInOrder> productInOrderRepository)
         {
             _shoppingCartRepository = shoppingCartRepository;
             _userRepository = userRepository;
             _orderRepository = orderRepository;
             _productInOrderRepository = productInOrderRepository;
+            _mailRepository = mailRepository;
         }
 
         public bool DeleteProductFromShoppingCart(string userId,Guid id)
@@ -77,40 +79,75 @@ namespace CinemaShop.Services.Implementation
         {
             if (!string.IsNullOrEmpty(userId))
             {
+                //Select * from Users Where Id LIKE userId
+
                 var loggedInUser = this._userRepository.Get(userId);
+
                 var userShoppingCart = loggedInUser.UserCart;
+
+                EmailMessage mail = new EmailMessage();
+                mail.MailTo = loggedInUser.Email;
+                mail.Subject = "Successfully created order";
+                mail.Status = false;
 
                 Order order = new Order
                 {
                     Id = Guid.NewGuid(),
-                    UserId = userId,
-                    User=loggedInUser
-                    
+                    User = loggedInUser,
+                    UserId = userId
                 };
 
                 this._orderRepository.Insert(order);
+
                 List<ProductInOrder> productInOrders = new List<ProductInOrder>();
+
                 var result = userShoppingCart.ProductInShoppingCarts.Select(z => new ProductInOrder
                 {
                     Id = Guid.NewGuid(),
-                    ProductId = z.ProductId,
-                    OrderId =z.ShoppingCartId,
-                    Quantity = z.Quantity,
-                    UserOrder = order
+                    ProductId = z.Product.Id,
+                    OrderedProduct = z.Product,
+                    OrderId = order.Id,
+                    UserOrder = order,
+                    Quantity=z.Quantity
                 }).ToList();
 
+                StringBuilder sb = new StringBuilder();
+
+                var totalPrice = 0;
+
+                sb.AppendLine("Успешна нарачка. Нарачката содржи: ");
+
+                for (int i = 1; i <= result.Count(); i++)
+                {
+                    var item = result[i - 1];
+
+                    totalPrice += item.Quantity * item.OrderedProduct.Price;
+
+                    sb.AppendLine(i.ToString() + ". " + item.OrderedProduct.ProductName + " со цена: " + item.OrderedProduct.Price + " и количина: " + item.Quantity);
+                }
+
+                sb.AppendLine("Вкупно: " + totalPrice.ToString());
+
+
+                mail.Content = sb.ToString();
+
+
                 productInOrders.AddRange(result);
-                foreach(var item in productInOrders)
+
+                foreach (var item in productInOrders)
                 {
                     this._productInOrderRepository.Insert(item);
                 }
+
                 loggedInUser.UserCart.ProductInShoppingCarts.Clear();
+
                 this._userRepository.Update(loggedInUser);
+                this._mailRepository.Insert(mail);
+
                 return true;
             }
             return false;
-        }
-
         
     }
+}
 }

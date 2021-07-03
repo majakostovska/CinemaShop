@@ -14,9 +14,14 @@ namespace CinemaShop.Services.Implementation
         {
             this._orderRespository = orderRespository;
         }
-        public List<Order> GetAllOrders()
+        public List<Order> getAllOrders()
         {
-            return this._orderRespository.GetAllOrders();
+            return this._orderRespository.getAllOrders();
+        }
+
+        public Order GetOrderDetails(BaseEntity model)
+        {
+            return this._orderRespository.GetOrderDetails(model);
         }
     }
 }

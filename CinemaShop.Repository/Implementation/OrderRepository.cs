@@ -18,17 +18,18 @@ namespace CinemaShop.Repository.Implementation
             this.context = context;
             entities = context.Set<Order>();
         }
-        public List<Order> GetAllOrders()
+
+
+        public List<Order> getAllOrders()
         {
             return entities
-                .Include(z=>z.UserId)
-                .Include(z=>z.User)
+                .Include(z => z.User)
                 .Include(z => z.ProductInOrders)
                 .Include("ProductInOrders.OrderedProduct")
                 .ToListAsync().Result;
         }
 
-        public Order getOrderDetails(BaseEntity model)
+        public Order GetOrderDetails(BaseEntity model)
         {
             return entities
                .Include(z => z.User)
